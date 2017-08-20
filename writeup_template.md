@@ -76,7 +76,8 @@ I also used GridSearchCV to find the best parameters for the linear SVC classifi
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+Generally speaking, using more scales and/or finer scales and bigger overlap windows will generate more boxes, or more false positives. Thus the heatmap threshold value needs to be higher to eliminate the false positives. On the other hand, using less scales and/or smaller overlap windows will produce less boxes, less positives, but doing this might miss some vehicles. Thus it is a trade-off between precision, recall, and speed. I tested images with different vehicle sizes and different lighting conditions, and decided to use the following parameters:
+
 
 ![alt text][image3]
 
