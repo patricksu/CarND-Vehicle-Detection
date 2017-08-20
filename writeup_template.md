@@ -70,6 +70,7 @@ Hog+Bin features:         0.997
 Hog+Histogram features:   0.994
 Hog+Bin+Histogram:        0.994
 
+I also used GridSearchCV to find the best parameters for the linear SVC classifier. It seems like the test score is not sensitive at all to the C value. So I simply use C value 1.
 
 ###Sliding Window Search
 
