@@ -51,11 +51,25 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters. I found that "orient=8, pixels_per_cell=(8,8), cells_per_block=(2,2)" are pretty parameters. I focused on trying different color spaces. I found that HLS color space is giving the biggest difference for the car and notcar images. Thus I selected HLS color space. 
+I tried various combinations of parameters. I found that "orient=8, pixels_per_cell=(8,8), cells_per_block=(2,2)" are pretty parameters. I focused on trying different color spaces. Then I tested different colorspaces using a linear SVM classifier, and the results are shown below. The YCrCb is the best colorspace.
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using HOG features with HLS colorspace. 
+I trained a linear SVM using HOG features, in line 80 to 85 of file "classify.py". The dataset has 5000 car images and 5000 notcar images. The test accuracy with different color spaces are shown below. 
+RGB:    0.9625
+HLS:    0.9895
+HSV:    0.9945
+LUV:    0.9915
+YUV:    0.9930
+YCrCb:  0.9955
+
+Then I tested different combinations of the features as shown below. It seems like HOG is the best, and adding Bin and/or Histogram features are not adding much benefits to HOG. Thus I use HOG features only.
+Bin features:             0.9205
+Histogram features:       0.488
+Hog+Bin features:         0.997
+Hog+Histogram features:   0.994
+Hog+Bin+Histogram:        0.994
+
 
 ###Sliding Window Search
 
