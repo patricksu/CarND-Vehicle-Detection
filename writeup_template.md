@@ -16,7 +16,7 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 [image1]: ./output_images/example_car_notcar.png
 [image2]: ./output_images/YCrCb_Hog.png
-[image3]: ./examples/sliding_windows.jpg
+[image3]: ./output_images/bounding_box_pipeline.png
 [image4]: ./examples/sliding_window.jpg
 [image5]: ./examples/bboxes_and_heat.png
 [image6]: ./examples/labels_map.png
@@ -76,8 +76,7 @@ I also used GridSearchCV to find the best parameters for the linear SVC classifi
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-Generally speaking, using more scales and/or finer scales and bigger overlap windows will generate more boxes, or more false positives. Thus the heatmap threshold value needs to be higher to eliminate the false positives. On the other hand, using less scales and/or smaller overlap windows will produce less boxes, less positives, but doing this might miss some vehicles. Thus it is a trade-off between precision, recall, and speed. I tested images with different vehicle sizes and different lighting conditions, and decided to use the following parameters:
-
+Generally speaking, using more scales and/or finer scales and bigger overlap windows will generate more boxes, or more false positives. Thus the heatmap threshold value needs to be higher to eliminate the false positives. On the other hand, using less scales and/or smaller overlap windows will produce less boxes, less positives, but doing this might miss some vehicles. Thus it is a trade-off between precision, recall, and speed. I tested images with different vehicle sizes and different lighting conditions, and decided to use the following parameters: scales = [0.6, 1, 1.5, 2], cells_per_step = 2, heatmap threshold = 2. 0.6 in scales is necessary to detect far vehicles which are smaller. Having 2 in scales also helps detecting close-by vehicles that are bigger. The figure below is showing the pipeline. It takes a raw image, use a classifier to search by sliding windows and give the boxes with vehicles in,then it draws a heatmap, and output the final bounding box. 
 
 ![alt text][image3]
 
