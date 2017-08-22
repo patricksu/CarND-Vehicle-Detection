@@ -16,8 +16,11 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 [image1]: ./output_images/example_car_notcar.png
 [image2]: ./output_images/YCrCb_Hog.png
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
+[image3]: ./output_images/bounding_box_pipeline_eg1.png
+[image4]: ./output_images/bounding_box_pipeline_eg2.png
+[image5]: ./output_images/bounding_box_pipeline_eg3.png
+[image6]: ./output_images/bounding_box_pipeline_eg4.png
+[image7]: ./output_images/bounding_box_pipeline_eg5.png
 [image5]: ./examples/bboxes_and_heat.png
 [image6]: ./examples/labels_map.png
 [image7]: ./examples/output_bboxes.png
@@ -51,25 +54,45 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters. I found that "orient=8, pixels_per_cell=(8,8), cells_per_block=(2,2)" are pretty parameters. I focused on trying different color spaces. I found that HLS color space is giving the biggest difference for the car and notcar images. Thus I selected HLS color space. 
+I tried various combinations of parameters. I found that "orient=8, pixels_per_cell=(8,8), cells_per_block=(2,2)" are pretty parameters. I focused on trying different color spaces. Then I tested different colorspaces using a linear SVM classifier, and the results are shown below. The YCrCb is the best colorspace.
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using HOG features with HLS colorspace. 
+I trained a linear SVM using HOG features, in line 80 to 85 of file "classify.py". The dataset has 5000 car images and 5000 notcar images. The test accuracy with different color spaces are shown below. 
+RGB:    0.9625
+HLS:    0.9895
+HSV:    0.9945
+LUV:    0.9915
+YUV:    0.9930
+YCrCb:  0.9955
+
+Then I tested different combinations of the features as shown below. It seems like HOG is the best, and adding Bin and/or Histogram features are not adding much benefits to HOG. Thus I use HOG features only.
+Bin features:             0.9205
+Histogram features:       0.488
+Hog+Bin features:         0.997
+Hog+Histogram features:   0.994
+Hog+Bin+Histogram:        0.994
+
+I also used GridSearchCV to find the best parameters for the linear SVC classifier. It seems like the test score is not sensitive at all to the C value. So I simply use C value 1.
 
 ###Sliding Window Search
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
-
-![alt text][image3]
+Lines from 128 to 169 in the file "box_search.py" implements the sliding window search. For each scale, it generates the hog features for the whole image, and searches all the windows for vehicles. It is based on subsampling approach from the class.
+Generally speaking, using more scales and/or finer scales and bigger overlap windows will generate more boxes, or more false positives. Thus the heatmap threshold value needs to be higher to eliminate the false positives. On the other hand, using less scales and/or smaller overlap windows will produce less boxes, less positives, but doing this might miss some vehicles. Thus it is a trade-off between precision, recall, and speed. I tested images with different vehicle sizes and different lighting conditions, and decided to use the following parameters: scales = [1, 1.5, 1.8], cells_per_step = 2, heatmap threshold = 1. Having scales smaller than 1 generates a lot of false-positives. Having 1.8 in scales helps detecting close-by vehicles that are bigger. Using three different scale levels generate enough bounding boxes that cover the whole vehicle. The cells_per_step is chosen as 2, since having 1 will generate a lot of overlapping boxes, and makes it hard to eliminate false-positive boxes using the heatmap threshold. 
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
+The figure below is showing the pipeline. It takes a raw image, use a classifier to search by sliding windows and give the boxes with vehicles in,then it draws a heatmap, and output the final bounding box. 
+
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
+![alt text][image3]
 ![alt text][image4]
+![alt text][image5]
+![alt text][image6]
+![alt text][image7]
 ---
 
 ### Video Implementation
