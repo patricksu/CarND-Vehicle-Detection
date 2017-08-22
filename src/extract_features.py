@@ -25,8 +25,7 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
     # Return the individual histograms, bin_centers and feature vector
     return hist_features
 
-###### TODO ###########
-# Define a function to extract features from a list of images
+
 # Have this function call bin_spatial() and color_hist()
 def extract_features(imgs, has_bin_feature, has_hist_feature, has_hog_feature, cspace='RGB', 
                         spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256), 
@@ -41,42 +40,58 @@ def extract_features(imgs, has_bin_feature, has_hist_feature, has_hog_feature, c
         # Append the new feature vector to the features list
     # Return list of feature vectors
     for img_path in imgs:
-        img = mpimg.imread(img_path)
-        if cspace != 'RGB':
-            if cspace == 'HSV':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-            elif cspace == 'LUV':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
-            elif cspace == 'HLS':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-            elif cspace == 'YUV':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
-            elif cspace == 'YCrCb':
-                feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-        else: feature_image = np.copy(img)
-        bin_features = []
-        hist_features = []
-        hog_features = []
-
-        if has_bin_feature == True:
-            bin_features = bin_spatial(img, size = spatial_size)
-        if has_hist_feature == True:
-            hist_features = color_hist(img, nbins=hist_bins, bins_range=hist_range)
-        if has_hog_feature == True:
-            # Call get_hog_features() with vis=False, feature_vec=True
-            if hog_channel == 'ALL':
-                hog_features = []
-                for channel in range(feature_image.shape[2]):
-                    hog_features.append(get_hog_features(feature_image[:,:,channel], 
-                                        orient, pix_per_cell, cell_per_block, 
-                                        vis=False, feature_vec=True))
-                hog_features = np.ravel(hog_features)        
-            else:
-                hog_features = get_hog_features(feature_image[:,:,hog_channel], orient, 
-                            pix_per_cell, cell_per_block, vis=False, feature_vec=True)
-        features.append(np.concatenate((bin_features, hist_features, hog_features)))
+        img = mpimg.imread(img_path)        
+        features.append(extract_single_feature(img, has_bin_feature, has_hist_feature, has_hog_feature, cspace=cspace, 
+                        spatial_size=spatial_size, hist_bins=hist_bins, hist_range=hist_range, 
+                        orient=orient, pix_per_cell=pix_per_cell, cell_per_block=cell_per_block, hog_channel=hog_channel))
     return features
 
+def convert_color(img, cspace):
+    if cspace != 'RGB':
+        if cspace == 'HSV':
+            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+        elif cspace == 'LUV':
+            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
+        elif cspace == 'HLS':
+            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+        elif cspace == 'YUV':
+            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
+        elif cspace == 'YCrCb':
+            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
+    else: feature_image = np.copy(img)
+    return feature_image
+
+# Have this function call bin_spatial() and color_hist()
+def extract_single_feature(img, has_bin_feature, has_hist_feature, has_hog_feature, cspace='RGB', 
+                        spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256), 
+                        orient=9, pix_per_cell=8, cell_per_block=2, hog_channel=0):
+    # Create a list to append feature vectors to
+    features = []
+    feature_image = convert_color(img, cspace)
+    bin_features = []
+    hist_features = []
+    hog_features = []
+
+    if has_bin_feature == True:
+        bin_features = bin_spatial(img, size = spatial_size)
+        # print('bin features: {}'.format(bin_features.shape))
+    if has_hist_feature == True:
+        hist_features = color_hist(img, nbins=hist_bins, bins_range=hist_range)
+        # print('hist features: {}'.format(hist_features.shape))
+    if has_hog_feature == True:
+        # Call get_hog_features() with vis=False, feature_vec=True
+        if hog_channel == 'ALL':
+            hog_features = []
+            for channel in range(feature_image.shape[2]):
+                hog_features.extend(get_hog_features(feature_image[:,:,channel], 
+                                    orient, pix_per_cell, cell_per_block, 
+                                    vis=False, feature_vec=True))
+            hog_features = np.ravel(hog_features)        
+        else:
+            hog_features = get_hog_features(feature_image[:,:,hog_channel], orient, 
+                        pix_per_cell, cell_per_block, vis=False, feature_vec=True)
+        # print('hog features: {}'.format(hog_features.shape))
+    return np.concatenate((bin_features, hist_features, hog_features))
 
 def main():
     (cars, notcars) = read_img_path()
