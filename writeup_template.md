@@ -22,9 +22,7 @@ The goals / steps of this project are the following:
 [image6]: ./output_images/bounding_box_pipeline_eg4.png
 [image7]: ./output_images/bounding_box_pipeline_eg5.png
 [image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
+[video1]: ./project_video_output.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
 ###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -66,7 +64,7 @@ LUV:    0.9915
 YUV:    0.9930
 YCrCb:  0.9955
 
-Then I tested different combinations of the features as shown below. It seems like HOG is the best, and adding Bin and/or Histogram features are not adding much benefits to HOG. Thus I use HOG features only.
+Then I tested different combinations of the features as shown below. It seems like HOG is the best, and adding Bin and/or Histogram features are not adding much benefits to HOG. 
 Bin features:             0.9205
 Histogram features:       0.488
 Hog+Bin features:         0.997
@@ -74,6 +72,8 @@ Hog+Histogram features:   0.994
 Hog+Bin+Histogram:        0.994
 
 I also used GridSearchCV to find the best parameters for the linear SVC classifier. It seems like the test score is not sensitive at all to the C value. So I simply use C value 1.
+
+The final features include Bin, histogram, and hog. I reduce the dimension from over 8000 to 200 using PCA without jeopardizing the model performance. 
 
 ###Sliding Window Search
 
@@ -84,7 +84,7 @@ Generally speaking, using more scales and/or finer scales and bigger overlap win
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-The figure below is showing the pipeline. It takes a raw image, use a classifier to search by sliding windows and give the boxes with vehicles in,then it draws a heatmap, and output the final bounding box. 
+The give figures below are showing how the pipeline works. It takes a raw image, use a classifier to search by sliding windows and give the vehicle boxes, then it draws a heatmap, and outputs the final bounding box. 
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
@@ -98,26 +98,14 @@ Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spat
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./project_video_output.mp4)
 
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected. The filters I use for the false-positives include restricting search to the right-down corner of the frames (vehicles appear in this area only). The heatmap threshold is critical for filtering out the false-positives. 
 
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
-
-### Here are six frames and their corresponding heatmaps:
-
-![alt text][image5]
-
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
-
+The bound boxes, heatmap, and resulting bounding boxes are shown in the figures above. 
 
 ---
 
@@ -125,5 +113,5 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+A major problem I faced is that the classifier is not quite effective with incomplete vehicles, i.e. when half of the vehicles are in the image. This is because the training dataset has only images of full vehicles, thus it does not generalize to incomplete vehicles. Doing data augmentation (cutting the raw traing images to half or so) will help the classifier. 
 
