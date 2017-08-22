@@ -21,7 +21,6 @@ The goals / steps of this project are the following:
 [image5]: ./output_images/bounding_box_pipeline_eg3.png
 [image6]: ./output_images/bounding_box_pipeline_eg4.png
 [image7]: ./output_images/bounding_box_pipeline_eg5.png
-[image5]: ./examples/bboxes_and_heat.png
 [video1]: ./project_video_output.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
@@ -30,7 +29,7 @@ The goals / steps of this project are the following:
 ---
 ###Writeup / README
 
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
+####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  
 
 You're reading it!
 
@@ -38,13 +37,13 @@ You're reading it!
 
 ####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the files "radImageDataset.py", "get_hog.py".  
+The code for this step is contained in the files "readImageDataset.py", "get_hog.py".  
 
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+I started by reading in all the `vehicle` and `non-vehicle` images, in lines 10 to 18 in the file "readImageDataset.py".  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
 ![alt text][image1]
 
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
+I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like. The Bin, histogram, and hog feature extraction code is in lines 75 to 92 in the file "extract_features.py"
 
 Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
@@ -52,11 +51,11 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters. I found that "orient=8, pixels_per_cell=(8,8), cells_per_block=(2,2)" are pretty parameters. I focused on trying different color spaces. Then I tested different colorspaces using a linear SVM classifier, and the results are shown below. The YCrCb is the best colorspace.
+I tried various combinations of parameters. I found that the set of "orient=8, pixels_per_cell=(8,8), cells_per_block=(2,2)" is pretty good. Then I tried different color spaces using a linear SVM classifier. The YCrCb is the best colorspace.
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using HOG features, in line 80 to 85 of file "classify.py". The dataset has 5000 car images and 5000 notcar images. The test accuracy with different color spaces are shown below. 
+I trained a linear SVM using HOG features, in line 91 to 105 of file "classify.py". I used all the images in the GTI and KITTI datasets. The test accuracy with different color spaces are shown below. 
 RGB:    0.9625
 HLS:    0.9895
 HSV:    0.9945
@@ -73,18 +72,18 @@ Hog+Bin+Histogram:        0.994
 
 I also used GridSearchCV to find the best parameters for the linear SVC classifier. It seems like the test score is not sensitive at all to the C value. So I simply use C value 1.
 
-The final features include Bin, histogram, and hog. I reduce the dimension from over 8000 to 200 using PCA without jeopardizing the model performance. 
+The final features include Bin, histogram, and hog. I reduced the dimension from over 8000 to 200 using PCA without jeopardizing the model performance. 
 
 ###Sliding Window Search
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-Lines from 128 to 169 in the file "box_search.py" implements the sliding window search. For each scale, it generates the hog features for the whole image, and searches all the windows for vehicles. It is based on subsampling approach from the class.
-Generally speaking, using more scales and/or finer scales and bigger overlap windows will generate more boxes, or more false positives. Thus the heatmap threshold value needs to be higher to eliminate the false positives. On the other hand, using less scales and/or smaller overlap windows will produce less boxes, less positives, but doing this might miss some vehicles. Thus it is a trade-off between precision, recall, and speed. I tested images with different vehicle sizes and different lighting conditions, and decided to use the following parameters: scales = [1, 1.5, 1.8], cells_per_step = 2, heatmap threshold = 1. Having scales smaller than 1 generates a lot of false-positives. Having 1.8 in scales helps detecting close-by vehicles that are bigger. Using three different scale levels generate enough bounding boxes that cover the whole vehicle. The cells_per_step is chosen as 2, since having 1 will generate a lot of overlapping boxes, and makes it hard to eliminate false-positive boxes using the heatmap threshold. 
+Lines from 128 to 169 in the file "box_search.py" implement the sliding window search. For each scale, it generates the hog features for the whole image (only once), and searches all the windows for vehicles. It is based on subsampling approach from the Udacity class.
+Using more scales and/or smaller scales and/or bigger overlap windows will generate more bounding boxes, but at the same time more false positives. Thus the heatmap threshold value needs to be higher to eliminate the false positives. On the other hand, using less scales and/or smaller overlap windows will produce less bounding boxes, less false-positives, but doing this might miss some vehicles. Thus picking the best parameters set is a trade-off between precision, recall, and speed. I used images with different vehicle sizes and different lighting conditions as test cases, and decided to use the following parameters: scales = [1, 1.5, 1.8], cells_per_step = 2, heatmap threshold = 1. Having scales smaller than 1 generates a lot of false-positives, thus the minimum scale I used is 1. Having scale 1.8 helps detecting close-by vehicles that are bigger. Using three different scales generate enough bounding boxes that cover the whole vehicle. The cells_per_step is chosen as 2, since having 1 will generate a lot of overlapping boxes, and makes it hard to eliminate false-positive boxes, while using 3 could not generate enough boxes, and miss vehicles. 
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-The give figures below are showing how the pipeline works. It takes a raw image, use a classifier to search by sliding windows and give the vehicle boxes, then it draws a heatmap, and outputs the final bounding box. 
+The figures below are showing how the pipeline works. It takes a raw image, use a classifier to search by sliding windows and give the vehicle boxes, then it draws a heatmap, and outputs the final bounding box. 
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
